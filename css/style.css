@@ -115,9 +115,11 @@ li {
 
 }
 
-.cell.attacked:hover {
-    cursor: default;
+.cell.hit:hover,
+.cell.miss:hover,
+.cell.sunk:hover {
     border-width: 0.5px;
+    cursor: default;
 
 }
 
@@ -127,6 +129,10 @@ li {
 
 .cell.miss {
     background-color: #808080;
+}
+
+.cell.sunk {
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 @media screen and (max-width: 390px) {

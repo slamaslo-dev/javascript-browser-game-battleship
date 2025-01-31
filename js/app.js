@@ -94,11 +94,23 @@ class Board {
             return undefined;
         } else if (target.ship instanceof Ship) {
             target.ship.hit(target.position);
-            this.board[row][col] = 'hit';
+            target.hit = 'true';
             return target.ship;
         } else if (target === 'hit' || target === 'miss') {
             return 'already-attacked';
         }
+    }
+
+    findShipCells(ship) {
+        const cells = [];
+        this.board.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                if (cell && cell.ship === ship) {
+                    cells.push({ row: rowIndex, col: colIndex });
+                }
+            });
+        });
+        return cells;
     }
 
     allShipsSunk() {
@@ -171,60 +183,83 @@ function initGame() {
 
 function resetBoardVisuals() {
     cellElements.forEach(cell => {
-        cell.classList.remove('attacked', 'hit', 'miss');
+        cell.classList.remove('hit', 'miss', 'sunk');
     });
 }
 
 function handleCellClick(evt) {
-    if (evt.target.classList.contains('cell') && !evt.target.classList.contains('attacked')) {
-        const row = parseInt(evt.target.dataset.row);
-        const col = parseInt(evt.target.dataset.col);
+    const cell = evt.target;
+    if (cell.classList.contains('cell') &&
+        !cell.classList.contains('hit') &&
+        !cell.classList.contains('miss') &&
+        !cell.classList.contains('sunk')) {
 
-        evt.target.classList.add('attacked');
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
 
-        processGameTurn(row, col);
+        const renderState = updateGameState(row, col);
+        render(renderState);
     }
 }
 
-function processGameTurn(row, col) {
+function updateGameState(row, col) {
     const attackResult = game.processAttack(row, col);
-    updateGameState(row, col, attackResult);
-}
 
-function updateGameState(row, col, attackResult) {
-    let result;
-    let sunkShip = null;
+    // Prepare the render state object
+    const renderState = {
+        row,
+        col,
+        result: null,
+        sunkShip: null,
+        gameOver: attackResult.gameOver
+    };
 
     if (attackResult.result === undefined) {
-        result = 'miss';
+        renderState.result = 'miss';
     } else if (attackResult.result instanceof Ship) {
-        result = 'hit';
-        // Check if the ship is now sunk
+        renderState.result = 'hit';
         if (attackResult.result.isSunk()) {
-            sunkShip = attackResult.result;
+            renderState.sunkShip = attackResult.result;
         }
     }
+    return renderState;
+}
 
-    // Update UI
-    updateCell(row, col, result, sunkShip);
-    updateMessage(result, sunkShip, attackResult.gameOver);
+function render(renderState) {
+    // Handle the hit/miss
+    updateCell(renderState.row, renderState.col, renderState.result);
+
+    // If a ship was sunk, update all cells after a small delay
+    if (renderState.sunkShip) {
+        setTimeout(() => {
+            const shipCells = game.player.board.findShipCells(renderState.sunkShip);
+            shipCells.forEach(cellPos => {
+                updateCell(cellPos.row, cellPos.col, 'sunk');
+            });
+        }, 500);  // Half second delay
+    }
+
+    // Update message
+    updateMessage(renderState.result, renderState.sunkShip, renderState.gameOver);
 
     // Handle game over
-    if (attackResult.gameOver) {
+    if (renderState.gameOver) {
         handleGameOver();
     }
 }
 
 function updateCell(row, col, result) {
-    const cell = getCellElement(row,col);
+    const cell = getCellElement(row, col);
 
-    cell.classList.add('attacked');
-    cell.classList.remove('hit', 'miss');
+    cell.classList.remove('hit', 'miss', 'sunk');
 
     if (result === 'hit') {
         cell.classList.add('hit');
     } else if (result === 'miss') {
         cell.classList.add('miss');
+    } else if (result === 'sunk') {
+        cell.classList.remove('hit');
+        cell.classList.add('sunk');
     }
 }
 
