@@ -7,6 +7,10 @@ const shipTypes = [
     { type: 'destroyer', length: 2 }
 ];
 
+/*-------------------------------- Variables --------------------------------*/
+
+let game;
+
 /*-------------------------------- Classes --------------------------------*/
 
 class Ship {
@@ -15,18 +19,20 @@ class Ship {
         this.length = shipType.length;
         this.name = shipType.type;
         this.hits = new Array(this.length).fill(false);
+        this.sunk = false;
     }
 
     hit(position) {
         if (position >= 0 && position < this.length) {
             this.hits[position] = true;
+            this.sunk = this.hits.every(position => position === true);
             return true;
         }
         return false;
     }
 
     isSunk() {
-        return this.hits.every(position => position === true);
+        return this.sunk;
     }
 }
 
@@ -84,11 +90,11 @@ class Board {
 
         if (target === null) {
             this.board[row][col] = 'miss';
-            return 'miss';
+            return undefined;
         } else if (target.ship instanceof Ship) {
             target.ship.hit(target.position);
             this.board[row][col] = 'hit';
-            return 'hit';
+            return target.ship;
         } else if (target === 'hit' || target === 'miss') {
             return 'already-attacked';
         }
@@ -106,7 +112,6 @@ class Player {
     }
 }
 
-
 class Game {
     constructor() {
         this.player = new Player('Player');
@@ -115,27 +120,18 @@ class Game {
     }
 
     processAttack(row, col) {
-        // If game is over, return early
         if (this.isGameOver) {
             return { result: null, gameOver: true };
         }
 
-        // Get attack result
         const result = this.player.board.receiveAttack(row, col);
 
-        // Check for game over
         if (this.player.board.allShipsSunk()) {
             this.isGameOver = true;
             return { result, gameOver: true };
         }
 
         return { result, gameOver: false };
-    }
-
-    reset() {
-        this.player = new Player('Player');
-        this.isGameOver = false;
-        this.#initializeShips();
     }
 
     #initializeShips() {
@@ -149,9 +145,107 @@ class Game {
 
 /*------------------------ Cached Element References ------------------------*/
 
+const startButtonElement = document.getElementById('start-button');
+const boardTableElement = document.querySelector('.game-board-table');
+const messageElement = document.querySelector('.message');
+
 /*----------------------------- Event Listeners -----------------------------*/
 
+startButtonElement.addEventListener('click', initGame);
+boardTableElement.addEventListener('click', handleCellClick);
+
+
 /*-------------------------------- Functions --------------------------------*/
+
+function initGame() {
+    resetBoardVisuals();
+    boardTableElement.classList.remove('disabled');
+    startButtonElement.classList.add('hidden');
+    game = new Game();
+    messageElement.innerText = 'Attack a position!';
+}
+
+function resetBoardVisuals() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+        cell.classList.remove('attacked', 'hit', 'miss');
+    });
+}
+
+function handleCellClick(evt) {
+    if (evt.target.classList.contains('cell') && !evt.target.classList.contains('attacked')) {
+        const row = parseInt(evt.target.dataset.row);
+        const col = parseInt(evt.target.dataset.col);
+
+        evt.target.classList.add('attacked');
+
+        processGameTurn(row, col);
+    }
+}
+
+function processGameTurn(row, col) {
+    const attackResult = game.processAttack(row, col);
+    updateGameState(row, col, attackResult);
+}
+
+function updateGameState(row, col, attackResult) {
+    let result;
+    let sunkShip = null;
+
+    if (attackResult.result === undefined) {
+        result = 'miss';
+    } else if (attackResult.result instanceof Ship) {
+        result = 'hit';
+        // Check if the ship is now sunk
+        if (attackResult.result.isSunk()) {
+            sunkShip = attackResult.result;
+        }
+    }
+
+    // Update UI
+    updateCell(row, col, result, sunkShip);
+    updateMessage(result, sunkShip, attackResult.gameOver);
+
+    // Handle game over
+    if (attackResult.gameOver) {
+        handleGameOver();
+    }
+}
+
+function updateCell(row, col, result, sunkShip) {
+    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+
+    cell.classList.add('attacked');
+    cell.classList.remove('hit', 'miss');
+
+    if (result === 'hit') {
+        cell.classList.add('hit');
+    } else if (result === 'miss') {
+        cell.classList.add('miss');
+    }
+}
+
+function updateMessage(result, sunkShip, gameOver) {
+    if (result === 'hit') {
+        if (sunkShip) {
+            messageElement.innerText = `Hit! You sunk the ${sunkShip.name}!`;
+        } else {
+            messageElement.innerText = 'Hit!';
+        }
+    } else if (result === 'miss') {
+        messageElement.innerText = 'Miss!';
+
+        if (gameOver) {
+            messageElement.innerText = 'Game Over! You found all ships!';
+        }
+    }
+}
+
+function handleGameOver() {
+    messageElement.innerText = 'Congratulations: all ships sunk!';
+    boardTableElement.classList.add('disabled');
+    startButtonElement.classList.remove('hidden');
+}
 
 /*-------------------------------- Tests --------------------------------*/
 
@@ -196,34 +290,33 @@ class Game {
 // console.log('Is destroyer sunk?', destroyer.isSunk());
 // console.log('All ships sunk?', Board.allShipsSunk());
 
-// Test Full Implementation
-console.log('Starting Game Test...');
+// // Test Full Implementation
+// console.log('Starting Game Test...');
 
-const game = new Game();
-console.log('Game initialized');
+// const game = new Game();
+// console.log('Game initialized');
 
-// Log initial board state
-console.log('\nInitial board state:');
-game.player.board.board.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-        if (cell && cell.ship) {
-            console.log(`Ship ${cell.ship.name} at ${rowIndex},${colIndex}`);
-        }
-    });
-});
+// // Log initial board state
+// console.log('\nInitial board state:');
+// game.player.board.board.forEach((row, rowIndex) => {
+//     row.forEach((cell, colIndex) => {
+//         if (cell && cell.ship) {
+//             console.log(`Ship ${cell.ship.name} at ${rowIndex},${colIndex}`);
+//         }
+//     });
+// });
 
-// Test attacks
-console.log('\nTesting attacks...');
+// // Test attacks
+// console.log('\nTesting attacks...');
 
-let isGameOver = false;
-for (let row = 0; row < 10 && !isGameOver; row++) {
-    for (let col = 0; col < 10 && !isGameOver; col++) {
-        const attackResult = game.processAttack(row, col);
-        console.log(`Attack at ${row},${col}: ${attackResult.result}`);
-        if (attackResult.gameOver) {
-            console.log('Game Over! All ships sunk!');
-            isGameOver = true;
-        }
-    }
-}
-
+// let isGameOver = false;
+// for (let row = 0; row < 10 && !isGameOver; row++) {
+//     for (let col = 0; col < 10 && !isGameOver; col++) {
+//         const attackResult = game.processAttack(row, col);
+//         console.log(`Attack at ${row},${col}: ${attackResult.result}`);
+//         if (attackResult.gameOver) {
+//             console.log('Game Over! All ships sunk!');
+//             isGameOver = true;
+//         }
+//     }
+// }
