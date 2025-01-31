@@ -1,4 +1,5 @@
 /*-------------------------------- Constants --------------------------------*/
+
 const shipTypes = [
     { type: 'carrier', length: 5 },
     { type: 'battleship', length: 4 },
@@ -148,6 +149,9 @@ class Game {
 const startButtonElement = document.getElementById('start-button');
 const boardTableElement = document.querySelector('.game-board-table');
 const messageElement = document.querySelector('.message');
+const cellElements = document.querySelectorAll('.cell');
+
+const getCellElement = (row, col) => document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
 
 /*----------------------------- Event Listeners -----------------------------*/
 
@@ -166,8 +170,7 @@ function initGame() {
 }
 
 function resetBoardVisuals() {
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => {
+    cellElements.forEach(cell => {
         cell.classList.remove('attacked', 'hit', 'miss');
     });
 }
@@ -212,8 +215,8 @@ function updateGameState(row, col, attackResult) {
     }
 }
 
-function updateCell(row, col, result, sunkShip) {
-    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+function updateCell(row, col, result) {
+    const cell = getCellElement(row,col);
 
     cell.classList.add('attacked');
     cell.classList.remove('hit', 'miss');
@@ -228,7 +231,7 @@ function updateCell(row, col, result, sunkShip) {
 function updateMessage(result, sunkShip, gameOver) {
     if (result === 'hit') {
         if (sunkShip) {
-            messageElement.innerText = `Hit! You sunk the ${sunkShip.name}!`;
+            messageElement.innerText = `Hit. You sunk the ${sunkShip.name}!`;
         } else {
             messageElement.innerText = 'Hit!';
         }
