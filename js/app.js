@@ -87,14 +87,11 @@ class Board {
     receiveAttack(row, col) {
         const target = this.board[row][col];
 
-        // console.log(`Attacking position ${row},${col}. Target is:`, target);
-
         if (target === null) {
             this.board[row][col] = 'miss';
             return undefined;
         } else if (target.ship instanceof Ship) {
             target.ship.hit(target.position);
-            target.hit = 'true';
             return target.ship;
         } else if (target === 'hit' || target === 'miss') {
             return 'already-attacked';
@@ -129,6 +126,8 @@ class Game {
     constructor() {
         this.player = new Player('Player');
         this.isGameOver = false;
+        this.hits = 0;
+        this.misses = 0;
         this.#initializeShips();
     }
 
@@ -139,12 +138,27 @@ class Game {
 
         const result = this.player.board.receiveAttack(row, col);
 
+        if (result === undefined) {
+            this.misses += 1;
+        } else if (result instanceof Ship) {
+            this.hits += 1;
+        }
+        
         if (this.player.board.allShipsSunk()) {
             this.isGameOver = true;
             return { result, gameOver: true };
         }
 
         return { result, gameOver: false };
+    }
+
+    getAccuracy() {
+        const totalShots = this.hits + this.misses;
+        if (totalShots === 0){
+            return 0;
+        } else {
+            return Math.round((this.hits / totalShots * 100));
+        }
     }
 
     #initializeShips() {
@@ -159,24 +173,29 @@ class Game {
 /*------------------------ Cached Element References ------------------------*/
 
 const startButtonElement = document.getElementById('start-button');
+const resetButtonElement = document.getElementById('reset-button');
 const boardTableElement = document.querySelector('.game-board-table');
 const messageElement = document.querySelector('.message');
 const cellElements = document.querySelectorAll('.cell');
+const hitsElement = document.getElementById('hits');
+const missesElement = document.getElementById('misses');
+const accuracyElement = document.getElementById('accuracy');
 
 const getCellElement = (row, col) => document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
 
 /*----------------------------- Event Listeners -----------------------------*/
 
 startButtonElement.addEventListener('click', initGame);
+resetButtonElement.addEventListener('click', initGame);
 boardTableElement.addEventListener('click', handleCellClick);
-
 
 /*-------------------------------- Functions --------------------------------*/
 
 function initGame() {
     resetBoardVisuals();
     boardTableElement.classList.remove('disabled');
-    startButtonElement.classList.add('hidden');
+    startButtonElement.setAttribute('disabled','');
+    resetButtonElement.removeAttribute('disabled');
     game = new Game();
     messageElement.innerText = 'Attack a position!';
 }
@@ -236,15 +255,22 @@ function render(renderState) {
             shipCells.forEach(cellPos => {
                 updateCell(cellPos.row, cellPos.col, 'sunk');
             });
-        }, 500);  // Half second delay
+        }, 350);  // Half second delay
     }
 
     // Update message
     updateMessage(renderState.result, renderState.sunkShip, renderState.gameOver);
+    hitsElement.innerText = `${game.hits}`;
+    missesElement.innerText = `${game.misses}`;
+    accuracyElement.innerText = `${game.getAccuracy()}%`;
+
 
     // Handle game over
     if (renderState.gameOver) {
-        handleGameOver();
+        messageElement.innerText = 'Congratulations: all ships sunk!';
+        boardTableElement.classList.add('disabled');
+        startButtonElement.removeAttribute('disabled');
+        resetButtonElement.setAttribute('disabled','');
     }
 }
 
@@ -272,20 +298,10 @@ function updateMessage(result, sunkShip, gameOver) {
         }
     } else if (result === 'miss') {
         messageElement.innerText = 'Miss!';
-
-        if (gameOver) {
-            messageElement.innerText = 'Game Over! You found all ships!';
-        }
     }
 }
 
-function handleGameOver() {
-    messageElement.innerText = 'Congratulations: all ships sunk!';
-    boardTableElement.classList.add('disabled');
-    startButtonElement.classList.remove('hidden');
-}
-
-/*-------------------------------- Tests --------------------------------*/
+/*-------------------------------- Game Logic Tests --------------------------------*/
 
 // // Test Ship Class
 // const carrier = new Ship('carrier');

@@ -13,7 +13,36 @@
     <header>
         <h1>Battleship</h1>
     </header>
-
+    <div class="info-box">
+        <section class="how-to-play">
+            <h2>How To Play</h2>
+            <ol class="instructions-list">
+                <li>Click 'Start Game' to begin.</li>
+                <li>Click any cell to attack.</li>
+                <li>Find all ships to win!</li>
+            </ol>
+        </section>
+    
+        <section class="ships">
+            <h2>Ships List</h2>
+            <ul class="ships-list">
+                <li>Carrier (5 cells)</li>
+                <li>Battleship (4 cells)</li>
+                <li>Cruiser (3 cells)</li>
+                <li>Submarine (3 cells)</li>
+                <li>Destroyer (2 cells)</li>
+            </ul>
+        </section>
+    
+        <section class="stats">
+            <h2>Stats</h2>
+            <ul class="stats-list">
+                <li>Hits: <span id="hits">0</span></li>
+                <li>Misses: <span id="misses">0</span></li>
+                <li>Accuracy: <span id="accuracy">0%</span></li>
+            </ul>
+        </section>
+    </div>
     <div class="game-layout">
         <div class="game-board">
             <div class="game-board-table disabled">
@@ -145,26 +174,7 @@
     </div>
     <div class="action-section">
         <button id="start-button" type="button">Start Game</button>
-    </div>
-    <div class="info-box">
-        <section class="how-to-play">
-            <h2>How To Play</h2>
-            <ol class="instructions-list">
-                <li>Click 'Start Game' to begin.</li>
-                <li>Click any cell to attack.</li>
-                <li>Find all ships to win!</li>
-            </ol>
-        </section>
-        <section class="ships">
-            <h2>Ships</h2>
-            <ul class="ships-list">
-                <li>Carrier (5 cells)</li>
-                <li>Battleship (4 cells)</li>
-                <li>Cruiser (3 cells)</li>
-                <li>Submarine (3 cells)</li>
-                <li>Destroyer (2 cells)</li>
-            </ul>
-        </section>
+        <button id="reset-button" type="button" disabled>Reset Game</button>
     </div>
 </body>
 
