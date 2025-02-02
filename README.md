@@ -3,9 +3,21 @@
 ## Project Description
 A browser-based implementation of the classic Battleship game. In this version, the player needs to find randomly positioned ships on the board.
 
+## Game Rules
+1. Ships are randomly placed on the board at game start
+2. Player clicks on cells to attack that position
+3. Feedback is provided for hits and misses
+4. Game ends when all ships are found
+5. Ships in the game:
+   - Carrier (5 cells)
+   - Battleship (4 cells)
+   - Cruiser (3 cells)
+   - Submarine (3 cells)
+   - Destroyer (2 cells)
+
 ## Development Phases
 
-### MVP (Current Focus)
+### MVP (Current Version)
 - Single player game
 - Random ship placement at game start
 - Basic hit/miss mechanics
@@ -13,7 +25,6 @@ A browser-based implementation of the classic Battleship game. In this version, 
 - Game over detection
 - Reset game option
 - Basic responsive design
-
 
 ### Next Steps Ideas
 - Computer vs Player mode
@@ -30,14 +41,3 @@ A browser-based implementation of the classic Battleship game. In this version, 
 - Player: Manages player board
 - Game: Controls game flow and state
 
-## Game Rules
-1. Ships are randomly placed on the board at game start
-2. Player clicks on cells to attack that position
-3. Feedback is provided for hits and misses
-4. Game ends when all ships are found
-5. Ships in the game:
-   - Carrier (5 cells)
-   - Battleship (4 cells)
-   - Cruiser (3 cells)
-   - Submarine (3 cells)
-   - Destroyer (2 cells)

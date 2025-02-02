@@ -53,32 +53,61 @@ class Board {
 
     placeShipRandom(ship) {
         let placed = false;
+        let orientation;
 
         while (placed === false) {
-            // Generate random position
-            const row = Math.floor(Math.random() * this.size);
-            const col = Math.floor(Math.random() * (this.size - ship.length + 1));
 
-            if (this.isValidPlacement(ship, row, col)) {
-                // Place the ship
-                for (let index = 0; index < ship.length; index++) {
-                    this.board[row][col + index] = {
-                        ship: ship,
-                        position: index
-                    }
-                }
-                this.ships.push(ship);
-                placed = true;
+            if (Math.random() < 0.5) {
+                orientation = 'horizontal';
+            } else {
+                orientation = 'vertical';
             }
 
+            if (orientation === 'horizontal') {
+                const row = Math.floor(Math.random() * this.size);
+                const col = Math.floor(Math.random() * (this.size - ship.length + 1));
+
+                if (this.isValidPlacement(ship, row, col, orientation)) {
+                    for (let i = 0; i < ship.length; i++) {
+                        this.board[row][col + i] = { ship: ship, position: i };
+                    }
+                    this.ships.push(ship);
+                    placed = true;
+                }
+            } else {
+                const row = Math.floor(Math.random() * (this.size - ship.length + 1));
+                const col = Math.floor(Math.random() * this.size);
+
+                if (this.isValidPlacement(ship, row, col, orientation)) {
+                    for (let i = 0; i < ship.length; i++) {
+                        this.board[row + i][col] = { ship: ship, position: i };
+                    }
+                    this.ships.push(ship);
+                    placed = true;
+                }
+            }
         }
     }
 
-    isValidPlacement(ship, row, col) {
-        // Check if all cells for the ship are empty
-        for (let index = 0; index < ship.length; index++) {
-            if (this.board[row][col + index] !== null) {
-                return false;
+    isValidPlacement(ship, row, col, orientation) {
+        for (let i = -1; i <= ship.length; i++) {
+            for (let j = -1; j <= 1; j++) {
+                let checkRow, checkCol;
+
+                if (orientation === 'horizontal') {
+                    checkRow = row + j;
+                    checkCol = col + i;
+                } else {
+                    checkRow = row + i;
+                    checkCol = col + j;
+                }
+
+                // Ensure the check is within board boundaries
+                if (checkRow >= 0 && checkRow < this.size && checkCol >= 0 && checkCol < this.size) {
+                    if (this.board[checkRow][checkCol] !== null) {
+                        return false;
+                    }
+                }
             }
         }
         return true;
@@ -143,7 +172,7 @@ class Game {
         } else if (result instanceof Ship) {
             this.hits += 1;
         }
-        
+
         if (this.player.board.allShipsSunk()) {
             this.isGameOver = true;
             return { result, gameOver: true };
@@ -154,7 +183,7 @@ class Game {
 
     getAccuracy() {
         const totalShots = this.hits + this.misses;
-        if (totalShots === 0){
+        if (totalShots === 0) {
             return 0;
         } else {
             return Math.round((this.hits / totalShots * 100));
@@ -192,18 +221,25 @@ boardTableElement.addEventListener('click', handleCellClick);
 /*-------------------------------- Functions --------------------------------*/
 
 function initGame() {
-    resetBoardVisuals();
+    resetGameState();
     boardTableElement.classList.remove('disabled');
-    startButtonElement.setAttribute('disabled','');
+    startButtonElement.setAttribute('disabled', '');
     resetButtonElement.removeAttribute('disabled');
     game = new Game();
     messageElement.innerText = 'Attack a position!';
 }
 
-function resetBoardVisuals() {
+function resetGameState() {
+    hitsElement.innerText = '0';
+    missesElement.innerText = '0';
+    accuracyElement.innerText = '0%';
+
     cellElements.forEach(cell => {
         cell.classList.remove('hit', 'miss', 'sunk');
+        cell.innerText = '';
     });
+
+    messageElement.innerText = 'Attack a position!';
 }
 
 function handleCellClick(evt) {
@@ -270,7 +306,7 @@ function render(renderState) {
         messageElement.innerText = 'Congratulations: all ships sunk!';
         boardTableElement.classList.add('disabled');
         startButtonElement.removeAttribute('disabled');
-        resetButtonElement.setAttribute('disabled','');
+        resetButtonElement.setAttribute('disabled', '');
     }
 }
 
@@ -281,15 +317,17 @@ function updateCell(row, col, result) {
 
     if (result === 'hit') {
         cell.classList.add('hit');
+        cell.innerText = 'X';
     } else if (result === 'miss') {
         cell.classList.add('miss');
+        cell.innerText = '•';
     } else if (result === 'sunk') {
         cell.classList.remove('hit');
         cell.classList.add('sunk');
     }
 }
 
-function updateMessage(result, sunkShip, gameOver) {
+function updateMessage(result, sunkShip) {
     if (result === 'hit') {
         if (sunkShip) {
             messageElement.innerText = `Hit. You sunk the ${sunkShip.name}!`;
