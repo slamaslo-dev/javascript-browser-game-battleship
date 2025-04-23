@@ -1,7 +1,7 @@
 # Battleship Game
 
 ## Project Description
-A browser-based implementation of the classic Battleship game. In this version, the player needs to find randomly positioned ships on the board. You can find the deployed project at: https://slamaslox.github.io/javascript-browser-game-battleship/
+A browser-based implementation of the classic Battleship game. In this version, the player needs to find randomly positioned ships on the board. You can find the deployed project at: https://slamaslo-dev.github.io/javascript-browser-game-battleship/
 
 ## Game Rules
 1. Ships are randomly placed on the board at game start
